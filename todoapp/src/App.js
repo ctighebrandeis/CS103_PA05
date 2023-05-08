@@ -7,14 +7,18 @@ const initTodos = [
     desc: "eat lunch",
     amount: 23,
     category: "food",
-    date: "5/02/2023"
+    date: "5/02/2023",
+    month: 5,
+    year: 2023
   },
   {
     itemID: 1,
     desc: "walk dog",
     amount: 12,
     category: "test",
-    date: "4/28/2023"
+    date: "4/28/2023",
+    month: 4,
+    year: 2023
   }
 ];
 
@@ -34,22 +38,30 @@ function getItemsFromLocalStorage() {
 export default function App() {
   let [items, setItems] = useState(getItemsFromLocalStorage);
   let [numKeys, setNumKeys] = useState(() => items.length);
-  let [msg, setMsg] = useState("none");
+  let [sumBy, setSumBy] = useState("None");
 
   function add_item() {
     // add an item to the transaction list
     const item = document.getElementById("item").value;
-    const amt = document.getElementById("amt").value;
+    const amt = Number(document.getElementById("amt").value);
     const date = document.getElementById("date").value;
     const cat = document.getElementById("cat").value;
+    const date_decon = date.split("/");
+    // Made the items have undisplayed entries for year and month to make grouping easier
     let newItem = {
       itemID: numKeys,
       desc: item,
       amount: amt,
       date: date,
-      category: cat
+      category: cat,
+      month: date_decon[0],
+      year: date_decon[2]
     };
     document.getElementById("item").value = "";
+    document.getElementById("amt").value = "";
+    document.getElementById("date").value = "";
+    document.getElementById("cat").value = "";
+
     setNumKeys(numKeys + 1);
     setItems([newItem, ...items]); // using the spread operator ...
   }
@@ -64,21 +76,27 @@ export default function App() {
     setNumKeys(numKeys - 1);
   }
 
+  function groupBy(column) {
+    let newsum = {};
+
+    // I would have liked to use an Array.prototype.group() call,
+    // but it's experimental so not usable in codesandbox
+
+    for (let i = 0; i < numKeys; i++) {
+      if (items[i][column] in newsum) {
+        newsum[items[i][column]] = newsum[column] + items[i]["amount"];
+      } else {
+        newsum[items[i][column]] = items[i]["amount"];
+      }
+    }
+
+    return newsum;
+  }
+
   useEffect(() => {
     // storing items if items changes value
     localStorage.setItem("items", JSON.stringify(items));
   }, [items]);
-
-  // // demo of how to get data from an Express server
-  // useEffect(() => {
-  //   const getMsg = async () => {
-  //     const response = await fetch('http://localhost:3000/test');
-  //     const result = await response.json();
-  //     setMsg(result);
-  //     console.log('msg =',result);
-  //   }
-  //   getMsg()
-  // },[msg])
 
   // this is used to allow text data to be submitted
   // when the user hits the 'Enter' key
@@ -92,29 +110,50 @@ export default function App() {
   return (
     <div className="App">
       <h1>Chris's Transaction List</h1>
-      {msg}
       <table style={{ width: "100%" }}>
-        <tr>
-          <th>delete</th>
-          <th>description</th>
-          <th>category</th>
-          <th>amount</th>
-          <th>date</th>
-        </tr>
+        {sumBy === "None" ? (
+          <tr>
+            <th>delete</th>
+            <th>description</th>
+            <th>category</th>
+            <th>amount</th>
+            <th>date</th>
+          </tr>
+        ) : (
+          <tr>
+            <th>{sumBy}</th>
+            <th>amount</th>
+          </tr>
+        )}
         <tbody>
-          {items.map((item) => (
-            <tr>
-              <td>
-                <button onClick={() => deleteItem(item["itemID"])}>X</button>
-              </td>
-              <td>{item["desc"]}</td>
-              <td>{item["category"]}</td>
-              <td>{item["amount"]}</td>
-              <td>{item["date"]}</td>
-            </tr>
-          ))}
+          {sumBy === "None"
+            ? items.map((item) => (
+                <tr>
+                  <td>
+                    <button onClick={() => deleteItem(item["itemID"])}>
+                      X
+                    </button>
+                  </td>
+                  <td>{item["desc"]}</td>
+                  <td>{item["category"]}</td>
+                  <td>{item["amount"]}</td>
+                  <td>{item["date"]}</td>
+                </tr>
+              ))
+            : Object.entries(groupBy(sumBy)).map((arr) => (
+                <tr>
+                  <td>{arr[0]}</td>
+                  <td>{arr[1]}</td>
+                </tr>
+              ))}
         </tbody>
       </table>
+      <h4>Summarize By:</h4>
+      <button onClick={() => setSumBy("date")}>date</button>
+      <button onClick={() => setSumBy("month")}>month</button>
+      <button onClick={() => setSumBy("year")}>year</button>
+      <button onClick={() => setSumBy("category")}>category</button>
+      <button onClick={() => setSumBy("None")}>nothing</button>
 
       <h2> add new todo item </h2>
       <input
@@ -123,29 +162,30 @@ export default function App() {
         id="item"
         placeholder="description"
       />
-      <br></br>
+      <br />
       <input
         type="text"
         onKeyDown={handleKeyDown}
         id="amt"
         placeholder="amount"
       />
-      <br></br>
+      <br />
       <input
         type="text"
         onKeyDown={handleKeyDown}
         id="date"
         placeholder="MM/DD/YYYY"
       />
-      <br></br>
+      <br />
       <input
         type="text"
         onKeyDown={handleKeyDown}
         id="cat"
         placeholder="category"
       />
-      <br></br>
+      <br />
       <button onClick={() => add_item()}>add Todo</button>
+      <br />
 
       <h2> DEBUGGING: list of items in JSON </h2>
       <pre>{JSON.stringify(items, null, 5)}</pre>
