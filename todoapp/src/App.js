@@ -4,16 +4,16 @@ import "./styles.css";
 const initTodos = [
   {
     itemID: 0,
-    desc: "eat lunch",
+    desc: "bought lunch",
     amount: 23,
     category: "food",
-    date: "5/02/2023",
+    date: "05/02/2023",
     month: 5,
     year: 2023
   },
   {
     itemID: 1,
-    desc: "walk dog",
+    desc: "test xactn",
     amount: 12,
     category: "test",
     date: "4/28/2023",
@@ -84,12 +84,15 @@ export default function App() {
 
     for (let i = 0; i < numKeys; i++) {
       if (items[i][column] in newsum) {
-        newsum[items[i][column]] = newsum[column] + items[i]["amount"];
+        console.log(newsum);
+        newsum[items[i][column]] =
+          Number(newsum[items[i][column]]) + Number(items[i]["amount"]);
+        console.log(newsum);
       } else {
-        newsum[items[i][column]] = items[i]["amount"];
+        newsum[items[i][column]] = Number(items[i]["amount"]);
       }
     }
-
+    console.log(newsum);
     return newsum;
   }
 
